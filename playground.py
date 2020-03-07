@@ -15,14 +15,14 @@ if __name__ == "__main__" :
     n = 50
 
     # create n TMs
-    alans = [tm.TuringMachine(None, input, 5, 5, 2) for _ in range(n)]
+    alans = [tm.TuringMachine(None, 5, 5, 2) for _ in range(n)]
 
     # try to solve this for 10000 steps max
     step = 0
     while step < 100000 :
 
         # run all TMs on the IO pair
-        res = [alan.run() for alan in alans]
+        res = [alan.run(input) for alan in alans]
 
         # calculate all differences between output and prediction
         diffs = [np.sum(np.abs(output.flatten() - r)) for r in res]
@@ -31,11 +31,11 @@ if __name__ == "__main__" :
         best_idx = np.argmin(diffs)
         alan = alans[best_idx]
 
-        #print("Best TM had diff ", diffs[best_idx])
+        print("Best TM had diff ", diffs[best_idx])
 
         # if we found a working TM, stop
         if diffs[best_idx] == 0 :
-            print("Found working TM:")
+            print("Found working TM: ")
             print(alan)
             alan.write_to_file("workingTM.p")
             break

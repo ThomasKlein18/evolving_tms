@@ -3,25 +3,23 @@ import pickle
 
 class TuringMachine :
 
-    def __init__(self, other, matr, num_states, alphabet_size, mutation_rate):
+    def __init__(self, other, num_states, alphabet_size, mutation_rate):
         """
         TuringMachine Constructor
         Setting up the band, filling the delta function with random values, choosing end states randomly
 
         tm = a TM for copying. Set to None if you want to create a random TM
-        matr = the input matrix
         num_states = the number of states of the finite automaton
         alphabet_size = the number of additional symbols (in addition to the number of unique colours in the matrix)
         mutation_rate = how many entries of the delta function to change in each mutation
         """
         
         if other is None :
-            # setting up band and read/write head
-            self.band = matr.flatten().astype(np.int32)
+            # setting up read/write head
             self.head = 0
 
             # setting up delta function
-            self.alphabet = TuringMachine._count_unique_colours(matr) + 5
+            self.alphabet = alphabet_size
             self.delta = np.random.rand(num_states, self.alphabet, 3) # delta : states x alphabet -> states x alphabet x {L,N,R}
             self.delta[:,:,0] = np.floor(self.delta[:,:,0] * num_states)       # generating outputs in range of states, for new state
             self.delta[:,:,1] = np.floor(self.delta[:,:,1] * self.alphabet)   # outputs in range of new symbol
@@ -40,7 +38,6 @@ class TuringMachine :
         # end of random creation, beginning of copy constructor
         else :
             self.delta = other.delta
-            self.band = other.band 
             self.mutation_rate = other.mutation_rate
             self.num_states = other.num_states
             self.end_states = other.end_states
@@ -49,6 +46,14 @@ class TuringMachine :
             # init stuff
             self.state = 0
             self.head = 0
+
+    def reset(self) :
+        """
+        Resets this Turing Machine to a blank state
+        """
+        self.head = 0
+        self.state = 0
+        self.band = None
 
     def read_from_array(self) :
         pass 
@@ -62,7 +67,7 @@ class TuringMachine :
     def write_to_array(self) :
         pass
 
-    def step(self) :
+    def _step(self) :
         """
         Performing one step of the TM: reading band, calling delta function, updating band and state
         """
@@ -78,15 +83,20 @@ class TuringMachine :
         self.head = (self.head + new_move) % len(self.band)
 
 
-    def run(self) :
+    def run(self, matrix) :
         """
         Running the TM: while no end state is reached, perform a step. Return band in the end.
         """
+        # set limit parameters 
         limit = 100
         step = 0
+
+        # setup band
+        self.band = matrix.flatten().astype(np.int32)
+
         # stop if end state is reached, keep going otherwise
         while step < limit and not self.state in self.end_states :
-            self.step()
+            self._step()
             step += 1
 
         return self.band
@@ -95,7 +105,7 @@ class TuringMachine :
         """
         Creates a child of this TM: a mutated version of itself
         """
-        alan = TuringMachine(self, 0, 0, 0, 0)
+        alan = TuringMachine(self, 0, 0, 0)
         alan._mutate()
         return alan
 
