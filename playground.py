@@ -21,6 +21,9 @@ if __name__ == "__main__" :
     step = 0
     while step < 100000 :
 
+        # create n TMs
+        alans = [tm.TuringMachine(None, 5, 5, 2) for _ in range(n)]
+
         # run all TMs on the IO pair
         res = [alan.run(input) for alan in alans]
 
@@ -31,7 +34,7 @@ if __name__ == "__main__" :
         best_idx = np.argmin(diffs)
         alan = alans[best_idx]
 
-        print("Best TM had diff ", diffs[best_idx])
+        #print("Step {}: Best TM had diff ".format(step), diffs[best_idx])
 
         # if we found a working TM, stop
         if diffs[best_idx] == 0 :
@@ -40,7 +43,7 @@ if __name__ == "__main__" :
             alan.write_to_file("workingTM.p")
             break
 
-        alans = [alan.procreate() for _ in range(n)]
+        #alans = [alan.procreate() for _ in range(n)]
 
         step += 1
         if step % 500 == 0 :

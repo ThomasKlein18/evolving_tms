@@ -1,7 +1,7 @@
 import numpy as np 
 import pickle
 
-class TuringMachine :
+class TuringMachine2D :
 
     def __init__(self, other, num_states, alphabet_size, mutation_rate):
         """
@@ -16,14 +16,14 @@ class TuringMachine :
         
         if other is None :
             # setting up read/write head
-            self.head = 0
+            self.head = (0,0)
 
             # setting up delta function
             self.alphabet = alphabet_size
-            self.delta = np.random.rand(num_states, self.alphabet, 3) # delta : states x alphabet -> states x alphabet x {L,N,R}
+            self.delta = np.random.rand(num_states, self.alphabet, 9) # delta : states x alphabet -> states x alphabet x {L,N,R}
             self.delta[:,:,0] = np.floor(self.delta[:,:,0] * num_states)       # generating outputs in range of states, for new state
-            self.delta[:,:,1] = np.floor(self.delta[:,:,1] * self.alphabet)   # outputs in range of new symbol
-            self.delta[:,:,2] = np.floor(self.delta[:,:,2] * 3) -1             # outputs in range [-1,0,1]
+            self.delta[:,:,1] = np.floor(self.delta[:,:,1] * self.alphabet)    # outputs in range of new symbol
+            self.delta[:,:,2] = np.floor(self.delta[:,:,2] * 9)                # outputs in range [0,8]
 
             self.delta = self.delta.astype(np.int32)
 
@@ -45,13 +45,13 @@ class TuringMachine :
 
             # init stuff
             self.state = 0
-            self.head = 0
+            self.head = (0,0)
 
     def reset(self) :
         """
         Resets this Turing Machine to a blank state
         """
-        self.head = 0
+        self.head = (0,0)
         self.state = 0
         self.band = None
 
@@ -80,7 +80,21 @@ class TuringMachine :
 
         # update band
         self.band[self.head] = new_symbol
-        self.head = (self.head + new_move) % len(self.band)
+        move_translator = {0 : (0, 0),
+                           1 : (-1, -1),
+                           2 : (-1, 0),
+                           3 : (-1, 1),
+                           4 : (0, -1),
+                           5 : (0, 1),
+                           6 : (1, -1),
+                           7 : (1, 0),
+                           8 : (1,1)}
+        width, height = self.band.shape
+        x,y = self.head 
+        newx, newy = move_translator(new_move)
+        x = (x + newx) % width 
+        y = (y + newy) % height
+        self.head = (x,y)
 
 
     def run(self, matrix) :
@@ -92,7 +106,7 @@ class TuringMachine :
         step = 0
 
         # setup band
-        self.band = matrix.flatten().astype(np.int32)
+        self.band = matrix.astype(np.int32)
 
         # stop if end state is reached, keep going otherwise
         while step < limit and not self.state in self.end_states :
@@ -105,7 +119,7 @@ class TuringMachine :
         """
         Creates a child of this TM: a mutated version of itself
         """
-        alan = TuringMachine(self, 0, 0, 0)
+        alan = TuringMachine2D(self, 0, 0, 0)
         alan._mutate()
         return alan
 
@@ -132,7 +146,7 @@ class TuringMachine :
             if rval < 0.33 :
                 # change one move-command
                 # (since it is so probable that this will be the same, I explicitly forbid the old value here)
-                self.delta[x,y,2] = int(np.random.choice(np.setdiff1d(np.array([-1,0,1]), np.array(self.delta[x,y,2]))))
+                self.delta[x,y,2] = int(np.random.choice(np.setdiff1d(np.arange(8), np.array(self.delta[x,y,2]))))
 
 
     def breed(self, other) :
